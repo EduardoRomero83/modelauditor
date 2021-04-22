@@ -60,15 +60,15 @@ df["r_charge_desc"] = df["r_charge_desc"].astype('category').cat.codes
 df["vr_charge_degree"] = df["vr_charge_degree"].astype('category').cat.codes
 df["vr_charge_desc"] = df["vr_charge_desc"].astype('category').cat.codes
 df["v_score_text"] = df["v_score_text"].astype('category').cat.codes
-df.head()
+pd.set_option("display.max_columns", None)
 
 #y = df['decile_score.1']
 #v_score_text has values (0, 1, 2, 3), but the number of examples corresponding to 0 is only 5 in the entire dataset.
 #Nevertheless, the neural network is trained to be a 4-class classifier
 y = df['v_score_text'].astype('int64') 
 protectedAttr = ["sex", "race", "dob", "age"]
-X = df.drop(['decile_score.1', 'v_score_text'], axis=1)
-X.head()
+X = df.drop(['decile_score.1', 'v_score_text', 'v_decile_score'], axis=1)
+print(X.head())
 
 cleanX = X.drop(protectedAttr, axis=1)
 # returns a numpy array
