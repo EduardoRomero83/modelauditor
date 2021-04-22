@@ -69,6 +69,15 @@ y = df['v_score_text'].astype('int64')
 ySex = df["sex"]
 yRace = df["race"]
 yAge = df["age"]
+print("Sex distribution")
+item_counts = df["sex"].value_counts()
+print(item_counts)
+print("Race distribution")
+item_counts = df["race"].value_counts()
+print(item_counts)
+print("Age distribution")
+item_counts = df["age"].value_counts()
+print(item_counts)
 protectedAttr = ["sex", "race", "dob", "age"]
 X = df.drop(['decile_score.1', 'v_score_text', 'v_decile_score'], axis=1)
 print(X.head())
