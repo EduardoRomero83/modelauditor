@@ -65,7 +65,10 @@ pd.set_option("display.max_columns", None)
 #y = df['decile_score.1']
 #v_score_text has values (0, 1, 2, 3), but the number of examples corresponding to 0 is only 5 in the entire dataset.
 #Nevertheless, the neural network is trained to be a 4-class classifier
-y = df['v_score_text'].astype('int64') 
+y = df['v_score_text'].astype('int64')
+ySex = df["sex"]
+yRace = df["race"]
+yAge = df["age"]
 protectedAttr = ["sex", "race", "dob", "age"]
 X = df.drop(['decile_score.1', 'v_score_text', 'v_decile_score'], axis=1)
 print(X.head())
@@ -83,7 +86,12 @@ cleanX.head()
 #     }
 
 # y = y.replace(fixLablesDict)
-
+_, _, y_SexTrain, y_SexTest = train_test_split(
+    cleanX, ySex, test_size=0.33, random_state=42)
+_, _, y_RaceTrain, y_RaceTest = train_test_split(
+    cleanX, yRace, test_size=0.33, random_state=42)
+_, _, y_AgeTrain, y_AgeTest = train_test_split(
+    cleanX, yAge, test_size=0.33, random_state=42)
 X_train, X_test, y_train, y_test = train_test_split(
     cleanX, y, test_size=0.33, random_state=42)
 
@@ -308,16 +316,12 @@ yhatLabel.columns = ["Person", "Label"]
 
 del model
 
+# Ground Truth biased
 clf = tree.DecisionTreeClassifier()
 X_train_bias, X_test_bias, y_train, y_test = train_test_split(X, y,
                                                               test_size=0.33,
                                                               random_state=42)
-
 clf.fit(X_train_bias, y_train)
-
-
-
-
 
 # tree.plot_tree(clf)
 totalCorrect = 0
@@ -325,10 +329,72 @@ for i in range(len(X_test_bias)):
     predict = clf.predict([X_test_bias.iloc[i]])
     if predict[0] == y_test.iloc[i]:
         totalCorrect = totalCorrect + 1
-print("Acc of decision tree learning ground truth: ", totalCorrect/3880)
+print("Acc of biased decision tree learning ground truth: ", totalCorrect/3880)
 
 del clf
 del predict
+
+# Ground Truth obscured
+clf = tree.DecisionTreeClassifier()
+clf.fit(X_train, y_train)
+
+# tree.plot_tree(clf)
+totalCorrect = 0
+for i in range(len(X_test)):
+    predict = clf.predict([X_test.iloc[i]])
+    if predict[0] == y_test.iloc[i]:
+        totalCorrect = totalCorrect + 1
+print("Acc of obscured decision tree learning ground truth: ", totalCorrect/3880)
+
+del clf
+del predict
+
+# Predict sex
+clf = tree.DecisionTreeClassifier()
+clf.fit(X_train, y_SexTrain)
+
+# tree.plot_tree(clf)
+totalCorrect = 0
+for i in range(len(X_test)):
+    predict = clf.predict([X_test.iloc[i]])
+    if predict[0] == y_SexTest.iloc[i]:
+        totalCorrect = totalCorrect + 1
+print("Acc of decision tree learning protected attribute sex: ", totalCorrect/3880)
+
+del clf
+del predict
+
+# Predict race
+clf = tree.DecisionTreeClassifier()
+clf.fit(X_train, y_RaceTrain)
+
+# tree.plot_tree(clf)
+totalCorrect = 0
+for i in range(len(X_test)):
+    predict = clf.predict([X_test.iloc[i]])
+    if predict[0] == y_RaceTest.iloc[i]:
+        totalCorrect = totalCorrect + 1
+print("Acc of decision tree learning protected attribute race: ", totalCorrect/3880)
+
+del clf
+del predict
+
+# Predict age
+clf = tree.DecisionTreeClassifier()
+clf.fit(X_train, y_AgeTrain)
+
+# tree.plot_tree(clf)
+totalCorrect = 0
+for i in range(len(X_test)):
+    predict = clf.predict([X_test.iloc[i]])
+    if predict[0] == y_AgeTest.iloc[i]:
+        totalCorrect = totalCorrect + 1
+print("Acc of decision tree learning protected attribute age: ", totalCorrect/3880)
+
+del clf
+del predict
+
+# Bias NN
 
 auditor = tree.DecisionTreeClassifier(max_depth=15)
 auditor.fit(X_train_bias, yhatLabel)
@@ -349,6 +415,8 @@ with open(name, "w") as f:
 del auditor
 del predict
 
+# Clean NN
+
 auditorObscured = tree.DecisionTreeClassifier(max_depth=15)
 auditorObscured.fit(X_train, yhatLabel)
 # tree.plot_tree(auditorObscured)
@@ -368,6 +436,7 @@ with open(name, "w") as f:
 del auditorObscured
 del predict
 
+# Forest bias NN
 
 forest = RandomForestClassifier(n_estimators=5, random_state=0,
                                 max_depth=5, n_jobs=1)
@@ -389,6 +458,9 @@ for estimator in forest.estimators_:
 
 del forest
 del predict
+
+# Forest obscure NN
+
 forestObscured = RandomForestClassifier(
     n_estimators=5, random_state=0, max_depth=5)
 forestObscured.fit(X_train, yhatLabel)
