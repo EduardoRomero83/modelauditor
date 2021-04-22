@@ -305,7 +305,7 @@ id2.index = id2.index + 1
 
 yhatLabel = pd.concat([id2, yhatLabel], axis=1)
 yhatLabel.columns = ["Person", "Label"]
-yhatLabel.head()
+print(yhatLabel.head())
 
 del model
 
