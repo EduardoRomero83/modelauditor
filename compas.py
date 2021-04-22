@@ -199,7 +199,7 @@ loader = trainloader
 acc = list()
 loss_ = list()
 ep = list()
-for epoch in range(50):
+for epoch in range(20):
     
     for i, (people, labels) in enumerate(loader):
         people = Variable(people)
@@ -225,7 +225,7 @@ test_loader = DataLoader(dataset=compas_test, batch_size=128, shuffle = True)
 
 
 t_loader = test_loader
-print('Epoch {0}: test set accuracy {1}'.format(epoch,get_accuracy(model,t_loader, True)))
+print('test set accuracy {1}'.format(get_accuracy(model,t_loader, True)))
 
 #Calculate, print and plot the confusion matrix
 nb_classes = 4
@@ -268,23 +268,23 @@ print(c_m)
 #             print('Epoch [%d/%d], Iter [%d] Loss: %.4f' % (epoch + 1, 10,
 #                                                            i+1, loss.item()))
 
-# model.eval()
+model.eval()
 # # compasTest = Compas(cleanXTest, y_test, transform=ybias)
-# test = Variable(torch.Tensor(X_test.values))
+test = Variable(torch.Tensor(X_test.values))
 
-# pred = model(test)
+pred = model(test)
 
-# _, predlabel = torch.max(pred.data, 1)
+_, predlabel = torch.max(pred.data, 1)
 
-# predlabel = predlabel.tolist()
-# predlabel = pd.DataFrame(predlabel)
-# predlabel.index = np.arange(3880) + 1
-# id = np.arange(3880) + 1
-# id = pd.DataFrame(id)
-# id.index = id.index + 1
+predlabel = predlabel.tolist()
+predlabel = pd.DataFrame(predlabel)
+predlabel.index = np.arange(3880) + 1
+id = np.arange(3880) + 1
+id = pd.DataFrame(id)
+id.index = id.index + 1
 
-# predlabel = pd.concat([id, predlabel], axis=1)
-# predlabel.columns = ["Person", "Label"]
+predlabel = pd.concat([id, predlabel], axis=1)
+predlabel.columns = ["Person", "Label"]
 # predlabel.head()
 """Made no changes beyond this point"""
 
