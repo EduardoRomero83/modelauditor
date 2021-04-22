@@ -241,7 +241,7 @@ with torch.no_grad():
                 confusion_matrix[t.long(), p.long()] += 1
 
 c_m = np.array(confusion_matrix)
-print(c_m)
+#print(c_m)
 
 #plt.imshow(c_m, cmap = 'cividis')
 #plt.colorbar()
@@ -286,7 +286,6 @@ id.index = id.index + 1
 predlabel = pd.concat([id, predlabel], axis=1)
 predlabel.columns = ["Person", "Label"]
 # predlabel.head()
-"""Made no changes beyond this point"""
 
 model.eval()
 # compasTest = Compas(cleanXTest, y_test, transform=ybias)
@@ -305,7 +304,7 @@ id2.index = id2.index + 1
 
 yhatLabel = pd.concat([id2, yhatLabel], axis=1)
 yhatLabel.columns = ["Person", "Label"]
-print(yhatLabel.head())
+#print(yhatLabel.head())
 
 del model
 
@@ -331,7 +330,7 @@ print("Acc of decision tree learning ground truth: ", totalCorrect/3880)
 del clf
 del predict
 
-auditor = tree.DecisionTreeClassifier()
+auditor = tree.DecisionTreeClassifier(max_depth=15)
 auditor.fit(X_train_bias, yhatLabel)
 # tree.plot_tree(auditor)
 
@@ -350,7 +349,7 @@ with open(name, "w") as f:
 del auditor
 del predict
 
-auditorObscured = tree.DecisionTreeClassifier()
+auditorObscured = tree.DecisionTreeClassifier(max_depth=15)
 auditorObscured.fit(X_train, yhatLabel)
 # tree.plot_tree(auditorObscured)
 
