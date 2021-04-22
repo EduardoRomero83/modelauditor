@@ -225,7 +225,7 @@ test_loader = DataLoader(dataset=compas_test, batch_size=128, shuffle = True)
 
 
 t_loader = test_loader
-print('test set accuracy {1}'.format(get_accuracy(model,t_loader, True)))
+print('test set accuracy {0}'.format(get_accuracy(model,t_loader, True)))
 
 #Calculate, print and plot the confusion matrix
 nb_classes = 4
