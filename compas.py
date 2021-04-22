@@ -89,11 +89,12 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 
 #Plot the histograms for the number of examples per class
-plt.bar(df['v_score_text'].value_counts().index, df['v_score_text'].value_counts(), ec = 'black')
+"""plt.bar(df['v_score_text'].value_counts().index, df['v_score_text'].value_counts(), ec = 'black')
 plt.title('Training Data')
 plt.title('Full Data')
 plt.xlabel('v_score_text (Target Variable)')
 plt.ylabel('Number of examples')
+"""
 
 import matplotlib.pyplot as plt
 plt.bar(y_train.value_counts().index, y_train.value_counts(), ec = 'black')
@@ -173,14 +174,14 @@ class Classifier(nn.Module):
 #         self.fc4 = nn.Linear(15, 10)
 
 #         self.dropout = nn.Dropout(p=0.2)
-          self.fc1 = nn.Linear(28, 87)
-          self.fc3 = nn.Linear(87, 40)
-          self.fc4 = nn.Linear(40, 4)
+        self.fc1 = nn.Linear(28, 87)
+        self.fc3 = nn.Linear(87, 40)
+        self.fc4 = nn.Linear(40, 4)
         
-          self.bn2 = nn.BatchNorm1d(num_features = 87)
-          self.bn3 = nn.BatchNorm1d(num_features = 40)
-          self.bn4 = nn.BatchNorm1d(num_features = 4)
-          self.dropout = nn.Dropout(p=0.1)
+        self.bn2 = nn.BatchNorm1d(num_features = 87)
+        self.bn3 = nn.BatchNorm1d(num_features = 40)
+        self.bn4 = nn.BatchNorm1d(num_features = 4)
+        self.dropout = nn.Dropout(p=0.1)
 
     def forward(self, x):
         x = x.view(x.shape[0], -1)
@@ -242,8 +243,8 @@ with torch.no_grad():
 c_m = np.array(confusion_matrix)
 print(c_m)
 
-plt.imshow(c_m, cmap = 'cividis')
-plt.colorbar()
+#plt.imshow(c_m, cmap = 'cividis')
+#plt.colorbar()
 
 
 
@@ -316,12 +317,8 @@ X_train_bias, X_test_bias, y_train, y_test = train_test_split(X, y,
 clf.fit(X_train_bias, y_train)
 
 
-totalCorrect = 0
-for i in range(len(X_test_bias)):
-    if predlabel.iloc[i]['Label'] == y_test.iloc[i]:
-        totalCorrect = totalCorrect + 1
-print("Acc of nn learning ground truth: ", totalCorrect/3880)
 
+"""
 
 # tree.plot_tree(clf)
 totalCorrect = 0
@@ -412,3 +409,4 @@ for estimator in forestObscured.estimators_:
         i = i + 1
 
 del forestObscured
+"""
