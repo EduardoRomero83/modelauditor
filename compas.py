@@ -174,7 +174,7 @@ class Classifier(nn.Module):
 #         self.fc4 = nn.Linear(15, 10)
 
 #         self.dropout = nn.Dropout(p=0.2)
-        self.fc1 = nn.Linear(28, 87)
+        self.fc1 = nn.Linear(27, 87)
         self.fc3 = nn.Linear(87, 40)
         self.fc4 = nn.Linear(40, 4)
         
@@ -370,7 +370,7 @@ del auditorObscured
 del predict
 
 
-forest = RandomForestClassifier(n_estimators=3, random_state=0,
+forest = RandomForestClassifier(n_estimators=5, random_state=0,
                                 max_depth=5, n_jobs=1)
 forest.fit(X_train_bias, yhatLabel)
 
