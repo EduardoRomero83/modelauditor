@@ -90,6 +90,12 @@ x_scaled = min_max_scaler.fit_transform(x)
 cleanX = pd.DataFrame(x_scaled)
 cleanX.head()
 
+x_sen = X.values
+min_max_scaler = preprocessing.MinMaxScaler()
+x_sen_scaled = min_max_scaler.fit_transform(x_sen)
+cleanX_sen = pd.DataFrame(x_sen_scaled)
+cleanX_sen.head()
+
 # fixLablesDict = {
 #     -1: 1,
 #     }
@@ -103,6 +109,9 @@ _, _, y_AgeTrain, y_AgeTest = train_test_split(
     cleanX, yAge, test_size=0.33, random_state=42)
 X_train, X_test, y_train, y_test = train_test_split(
     cleanX, y, test_size=0.33, random_state=42)
+
+X_sen_train, X_sen_test, y_sen_train, y_sen_test = train_test_split(
+    cleanX_sen, y, test_size=0.33, random_state=42)
 
 
 #Plot the histograms for the number of examples per class
@@ -161,6 +170,10 @@ ybias = normY()
 compas = Compas(X_train, y_train, transform=None) 
 trainloader = DataLoader(dataset=compas, batch_size=64,
                          shuffle=True)
+
+compas_sen = Compas(X_sen_train, y_sen_train, transform=None) 
+trainloader2 = DataLoader(dataset=compas_sen, batch_size=64,
+                         shuffle=True)
 #Referring to https://towardsdatascience.com/build-a-fashion-mnist-cnn-pytorch-style-efb297e22582 for the neural network, usage of cross entropy and the accuracy function 
 def get_accuracy(model,dataloader, pr):
   count=0
@@ -209,7 +222,7 @@ class Classifier(nn.Module):
         # don't need softmax here since we'll use cross-entropy as activation.
         return x
 
-model = Classifier()
+model = Classifier(False)
 optimizer = optim.Adam(model.parameters(), lr=0.009) 
 model.train()
 loader = trainloader
@@ -258,6 +271,60 @@ with torch.no_grad():
                 confusion_matrix[t.long(), p.long()] += 1
 
 c_m = np.array(confusion_matrix)
+
+
+model2 = Classifier(True)
+optimizer2 = optim.Adam(model2.parameters(), lr=0.009) 
+model2.train()
+loader2 = trainloader2
+acc2 = list()
+loss2 = list()
+ep = list()
+for epoch in range(20):
+    
+    for i, (people, labels) in enumerate(loader2):
+        people = Variable(people)
+        labels = Variable(labels)
+        #print(labels.unique())
+        optimizer2.zero_grad()
+        outputs = model2(people)
+
+        loss = F.cross_entropy(outputs, labels)
+        loss.backward()
+        optimizer2.step()
+
+    #Storing the accuracies and losses for plotting later
+    a = get_accuracy(model2,loader2, False)
+    acc2.append(a)
+    loss2.append(loss.item())
+    ep.append(epoch)
+    print('Epoch {0}: train set accuracy {1}'.format(epoch,a))
+
+compas_sen_test = Compas(X_sen_test, y_sen_test, None)
+test_loader = DataLoader(dataset=compas_sen_test, batch_size=128, shuffle = True)
+                         #sampler=weighted_sampler)
+
+
+t_loader = test_loader
+print('test set accuracy {0}'.format(get_accuracy(model2,t_loader, True)))
+
+#Calculate, print and plot the confusion matrix
+nb_classes = 4
+
+confusion_matrix2 = torch.zeros(nb_classes, nb_classes)
+with torch.no_grad():
+    for i, (inputs, classes) in enumerate(t_loader):
+        inputs = Variable(inputs)
+        classes = Variable(classes)
+        outputs = model2(inputs)
+        _, preds = torch.max(outputs, 1)
+        for t, p in zip(classes.view(-1), preds.view(-1)):
+                confusion_matrix[t.long(), p.long()] += 1
+
+c_m2 = np.array(confusion_matrix2)
+
+
+
 #print(c_m)
 
 #plt.imshow(c_m, cmap = 'cividis')
