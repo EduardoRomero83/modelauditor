@@ -102,7 +102,7 @@ _, _, y_RaceTrain, y_RaceTest = train_test_split(
 _, _, y_AgeTrain, y_AgeTest = train_test_split(
     cleanX, yAge, test_size=0.33, random_state=42)
 X_train, X_test, y_train, y_test = train_test_split(
-    cleanX, y, test_size=0.33, random_state=42)
+    X, y, test_size=0.33, random_state=42)
 
 
 #Plot the histograms for the number of examples per class
@@ -191,7 +191,7 @@ class Classifier(nn.Module):
 #         self.fc4 = nn.Linear(15, 10)
 
 #         self.dropout = nn.Dropout(p=0.2)
-        self.fc1 = nn.Linear(27, 87)
+        self.fc1 = nn.Linear(31, 87)
         self.fc3 = nn.Linear(87, 40)
         self.fc4 = nn.Linear(40, 4)
         
