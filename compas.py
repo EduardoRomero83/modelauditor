@@ -1,29 +1,18 @@
 # -*- coding: utf-8 -*-
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
-from torch import nn, optim
-import torch.nn.functional as F
-import torch.utils.data as data
-from torch.utils.data import DataLoader
+
+@@ -10,86 +10,92 @@
 from torch.utils.data import Dataset
 import torch
 from torch.autograd import Variable
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
-
 """COMPAS.ipynb
 Auditor of neural network to find disparate impact
 """
-
 """
 !wget https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores.csv
-
 """
-
-
 df = pd.read_csv("compas-scores.csv")
 df = df.fillna(-1)
 dropFeats = ["decile_score", "id", "name", "first",
@@ -61,7 +50,6 @@ df["vr_charge_degree"] = df["vr_charge_degree"].astype('category').cat.codes
 df["vr_charge_desc"] = df["vr_charge_desc"].astype('category').cat.codes
 df["v_score_text"] = df["v_score_text"].astype('category').cat.codes
 pd.set_option("display.max_columns", None)
-
 #y = df['decile_score.1']
 #v_score_text has values (0, 1, 2, 3), but the number of examples corresponding to 0 is only 5 in the entire dataset.
 #Nevertheless, the neural network is trained to be a 4-class classifier
@@ -81,7 +69,6 @@ print(item_counts)
 protectedAttr = ["sex", "race", "dob", "age"]
 X = df.drop(['decile_score.1', 'v_score_text', 'v_decile_score'], axis=1)
 print(X.head())
-
 cleanX = X.drop(protectedAttr, axis=1)
 # returns a numpy array
 x = cleanX.values
@@ -90,10 +77,15 @@ x_scaled = min_max_scaler.fit_transform(x)
 cleanX = pd.DataFrame(x_scaled)
 cleanX.head()
 
+x_sen = X.values
+min_max_scaler = preprocessing.MinMaxScaler()
+x_sen_scaled = min_max_scaler.fit_transform(x_sen)
+cleanX_sen = pd.DataFrame(x_sen_scaled)
+cleanX_sen.head()
+
 # fixLablesDict = {
 #     -1: 1,
 #     }
-
 # y = y.replace(fixLablesDict)
 _, _, y_SexTrain, y_SexTest = train_test_split(
     cleanX, ySex, test_size=0.33, random_state=42)
@@ -104,6 +96,9 @@ _, _, y_AgeTrain, y_AgeTest = train_test_split(
 X_train, X_test, y_train, y_test = train_test_split(
     cleanX, y, test_size=0.33, random_state=42)
 
+X_sen_train, X_sen_test, y_sen_train, y_sen_test = train_test_split(
+    cleanX_sen, y, test_size=0.33, random_state=42)
+
 
 #Plot the histograms for the number of examples per class
 """plt.bar(df['v_score_text'].value_counts().index, df['v_score_text'].value_counts(), ec = 'black')
@@ -112,60 +107,50 @@ plt.title('Full Data')
 plt.xlabel('v_score_text (Target Variable)')
 plt.ylabel('Number of examples')
 """
-
 import matplotlib.pyplot as plt
 plt.bar(y_train.value_counts().index, y_train.value_counts(), ec = 'black')
 plt.title('Training Data')
 plt.xlabel('v_score_text (Target Variable)')
 plt.ylabel('Number of examples')
-
-
 plt.bar(y_test.value_counts().index, y_test.value_counts(), ec = 'black')
 plt.title('Training Data')
 plt.title('Test Data')
 plt.xlabel('v_score_text (Target Variable)')
 plt.ylabel('Number of examples')
-
-
-
 class normY(object):
     def __init__(self, bias=-1):
         self.bias = bias
-
     def __call__(self, sample):
         x = sample[0]
         y = sample[1]
         y = y + self.bias
         sample = x, y
         return sample
-
-
 class Compas(Dataset):
     def __init__(self, trainX, trainY, transform=None):
         self.x = trainX.values
         self.y = trainY.values
         self.len = self.x.shape[0]
         self.transform = transform
-
     def __getitem__(self, index):
         sample = torch.Tensor(self.x[index].astype(float)), self.y[index]
         if self.transform:
             sample = self.transform(sample)
         return sample
-
     def __len__(self):
         return self.len
-
-
 ybias = normY()
 compas = Compas(X_train, y_train, transform=None) 
 trainloader = DataLoader(dataset=compas, batch_size=64,
+                         shuffle=True)
+
+compas_sen = Compas(X_sen_train, y_sen_train, transform=None) 
+trainloader2 = DataLoader(dataset=compas_sen, batch_size=64,
                          shuffle=True)
 #Referring to https://towardsdatascience.com/build-a-fashion-mnist-cnn-pytorch-style-efb297e22582 for the neural network, usage of cross entropy and the accuracy function 
 def get_accuracy(model,dataloader, pr):
   count=0
   correct=0
-
   model.eval()
   with torch.no_grad():
     for batch in dataloader:
@@ -181,17 +166,18 @@ def get_accuracy(model,dataloader, pr):
       correct+=batch_correct
   model.train()
   return correct/count
-
 class Classifier(nn.Module):
-    def __init__(self):
+    def __init__(self, sensitive):
         super().__init__()
 #         self.fc1 = nn.Linear(29, 25)
 #         self.fc2 = nn.Linear(25, 20)
 #         self.fc3 = nn.Linear(20, 15)
 #         self.fc4 = nn.Linear(15, 10)
-
 #         self.dropout = nn.Dropout(p=0.2)
-        self.fc1 = nn.Linear(27, 87)
+        if sensitive == False:
+          self.fc1 = nn.Linear(27, 87)
+        else:
+          self.fc1 = nn.Linear(31, 87)
         self.fc3 = nn.Linear(87, 40)
         self.fc4 = nn.Linear(40, 4)
         
@@ -199,17 +185,16 @@ class Classifier(nn.Module):
         self.bn3 = nn.BatchNorm1d(num_features = 40)
         self.bn4 = nn.BatchNorm1d(num_features = 4)
         self.dropout = nn.Dropout(p=0.1)
-
     def forward(self, x):
         x = x.view(x.shape[0], -1)
-
         x = self.dropout(F.relu(self.bn2(self.fc1(x))))
         x = self.dropout(F.relu(self.bn3(self.fc3(x))))
         x = (F.relu(self.bn4(self.fc4(x))))
         # don't need softmax here since we'll use cross-entropy as activation.
         return x
 
-model = Classifier()
+
+model = Classifier(False)
 optimizer = optim.Adam(model.parameters(), lr=0.009) 
 model.train()
 loader = trainloader
@@ -224,29 +209,22 @@ for epoch in range(20):
         #print(labels.unique())
         optimizer.zero_grad()
         outputs = model(people)
-
         loss = F.cross_entropy(outputs, labels)
         loss.backward()
         optimizer.step()
-
     #Storing the accuracies and losses for plotting later
     a = get_accuracy(model,loader, False)
     acc.append(a)
     loss_.append(loss.item())
     ep.append(epoch)
     print('Epoch {0}: train set accuracy {1}'.format(epoch,a))
-
 compas_test = Compas(X_test, y_test, None)
 test_loader = DataLoader(dataset=compas_test, batch_size=128, shuffle = True)
                          #sampler=weighted_sampler)
-
-
 t_loader = test_loader
 print('test set accuracy {0}'.format(get_accuracy(model,t_loader, True)))
-
 #Calculate, print and plot the confusion matrix
 nb_classes = 4
-
 confusion_matrix = torch.zeros(nb_classes, nb_classes)
 with torch.no_grad():
     for i, (inputs, classes) in enumerate(t_loader):
@@ -258,7 +236,57 @@ with torch.no_grad():
                 confusion_matrix[t.long(), p.long()] += 1
 
 c_m = np.array(confusion_matrix)
-#print(c_m)
+
+
+model2 = Classifier(True)
+optimizer2 = optim.Adam(model2.parameters(), lr=0.009) 
+model2.train()
+loader2 = trainloader2
+acc2 = list()
+loss2 = list()
+ep = list()
+for epoch in range(20):
+
+    for i, (people, labels) in enumerate(loader2):
+        people = Variable(people)
+        labels = Variable(labels)
+        #print(labels.unique())
+        optimizer2.zero_grad()
+        outputs = model2(people)
+
+        loss = F.cross_entropy(outputs, labels)
+        loss.backward()
+        optimizer2.step()
+
+    #Storing the accuracies and losses for plotting later
+    a = get_accuracy(model2,loader2, False)
+    acc2.append(a)
+    loss2.append(loss.item())
+    ep.append(epoch)
+    print('Epoch {0}: train set accuracy {1}'.format(epoch,a))
+
+compas_sen_test = Compas(X_sen_test, y_sen_test, None)
+test_loader = DataLoader(dataset=compas_sen_test, batch_size=128, shuffle = True)
+                         #sampler=weighted_sampler)
+
+
+t_loader = test_loader
+print('test set accuracy {0}'.format(get_accuracy(model2,t_loader, True)))
+
+#Calculate, print and plot the confusion matrix
+nb_classes = 4
+
+confusion_matrix2 = torch.zeros(nb_classes, nb_classes)
+with torch.no_grad():
+    for i, (inputs, classes) in enumerate(t_loader):
+        inputs = Variable(inputs)
+        classes = Variable(classes)
+        outputs = model2(inputs)
+        _, preds = torch.max(outputs, 1)
+        for t, p in zip(classes.view(-1), preds.view(-1)):
+                confusion_matrix[t.long(), p.long()] += 1
+
+c_m2 = np.array(confusion_matrix2)#print(c_m)
 
 #plt.imshow(c_m, cmap = 'cividis')
 #plt.colorbar()
