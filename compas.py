@@ -101,6 +101,8 @@ _, _, y_RaceTrain, y_RaceTest = train_test_split(
     cleanX, yRace, test_size=0.33, random_state=42)
 _, _, y_AgeTrain, y_AgeTest = train_test_split(
     cleanX, yAge, test_size=0.33, random_state=42)
+X_train1, X_test1, y_train1, y_test1 = train_test_split(
+    cleanX, y, test_size=0.33, random_state=42)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.33, random_state=42)
 
@@ -345,13 +347,13 @@ del predict
 
 # Ground Truth obscured
 clf = tree.DecisionTreeClassifier()
-clf.fit(X_train, y_train)
+clf.fit(X_train1, y_train1)
 
 # tree.plot_tree(clf)
 totalCorrect = 0
 for i in range(len(X_test)):
-    predict = clf.predict([X_test.iloc[i]])
-    if predict[0] == y_test.iloc[i]:
+    predict = clf.predict([X_test1.iloc[i]])
+    if predict[0] == y_test1.iloc[i]:
         totalCorrect = totalCorrect + 1
 print("Acc of obscured decision tree learning ground truth: ", totalCorrect/3880)
 
@@ -360,12 +362,12 @@ del predict
 
 # Predict sex
 clf = tree.DecisionTreeClassifier()
-clf.fit(X_train, y_SexTrain)
+clf.fit(X_train1, y_SexTrain)
 
 # tree.plot_tree(clf)
 totalCorrect = 0
 for i in range(len(X_test)):
-    predict = clf.predict([X_test.iloc[i]])
+    predict = clf.predict([X_test1.iloc[i]])
     if predict[0] == y_SexTest.iloc[i]:
         totalCorrect = totalCorrect + 1
 print("Acc of decision tree learning protected attribute sex: ", totalCorrect/3880)
@@ -375,12 +377,12 @@ del predict
 
 # Predict race
 clf = tree.DecisionTreeClassifier()
-clf.fit(X_train, y_RaceTrain)
+clf.fit(X_train1, y_RaceTrain)
 
 # tree.plot_tree(clf)
 totalCorrect = 0
 for i in range(len(X_test)):
-    predict = clf.predict([X_test.iloc[i]])
+    predict = clf.predict([X_test1.iloc[i]])
     if predict[0] == y_RaceTest.iloc[i]:
         totalCorrect = totalCorrect + 1
 print("Acc of decision tree learning protected attribute race: ", totalCorrect/3880)
@@ -390,12 +392,12 @@ del predict
 
 # Predict age
 clf = tree.DecisionTreeClassifier()
-clf.fit(X_train, y_AgeTrain)
+clf.fit(X_train1, y_AgeTrain)
 
 # tree.plot_tree(clf)
 totalCorrect = 0
 for i in range(len(X_test)):
-    predict = clf.predict([X_test.iloc[i]])
+    predict = clf.predict([X_test1.iloc[i]])
     if predict[0] == y_AgeTest.iloc[i]:
         totalCorrect = totalCorrect + 1
 print("Acc of decision tree learning protected attribute age: ", totalCorrect/3880)
@@ -427,12 +429,12 @@ del predict
 # Clean NN
 
 auditorObscured = tree.DecisionTreeClassifier(max_depth=15)
-auditorObscured.fit(X_train, yhatLabel)
+auditorObscured.fit(X_train1, yhatLabel)
 # tree.plot_tree(auditorObscured)
 
 totalCorrect = 0
 for i in range(len(X_test)):
-    predict = auditorObscured.predict([X_test.iloc[i]])
+    predict = auditorObscured.predict([X_test1.iloc[i]])
     if predict[0][1] == predlabel.iloc[i]['Label']:
         totalCorrect = totalCorrect + 1
 print("Acc of obscured dec tree learning nn: ", totalCorrect/3880)
@@ -472,11 +474,11 @@ del predict
 
 forestObscured = RandomForestClassifier(
     n_estimators=5, random_state=0, max_depth=5)
-forestObscured.fit(X_train, yhatLabel)
+forestObscured.fit(X_train1, yhatLabel)
 
 totalCorrect = 0
 for i in range(len(X_test)):
-    predict = forestObscured.predict([X_test.iloc[i]])
+    predict = forestObscured.predict([X_test1.iloc[i]])
     if predict[0][1] == predlabel.iloc[i]['Label']:
         totalCorrect = totalCorrect + 1
 print("Acc Random Forest obscured learning nn: ", totalCorrect/3880)
