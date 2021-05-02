@@ -238,7 +238,7 @@ for epoch in range(20):
     ep.append(epoch)
     print('Epoch {0}: train set accuracy {1}'.format(epoch,a))
 
-compas_test = Compas(X_test, y_test, None)
+compas_test = Compas(X_test1, y_test1, None)
 test_loader = DataLoader(dataset=compas_test, batch_size=128, shuffle = True)
                          #sampler=weighted_sampler)
 
