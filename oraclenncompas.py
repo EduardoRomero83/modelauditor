@@ -423,6 +423,18 @@ with open(name, "w") as f:
     f = tree.export_graphviz(auditor, out_file=f)
     i = i + 1
 
+del predict
+
+# Bias Ground Truth
+
+
+totalCorrect = 0
+for i in range(len(X_test_bias)):
+    predict = auditor.predict([X_test_bias.iloc[i]])
+    if predict[0][1] == y_test1.iloc[i]:
+        totalCorrect = totalCorrect + 1
+print("Acc of dec tree with bias feats on ground truth: ", totalCorrect/3880)
+
 del auditor
 del predict
 

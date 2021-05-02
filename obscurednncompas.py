@@ -160,7 +160,7 @@ class Compas(Dataset):
 
 
 ybias = normY()
-compas = Compas(X_train, y_train, transform=None) 
+compas = Compas(X_train1, y_train1, transform=None) 
 trainloader = DataLoader(dataset=compas, batch_size=64,
                          shuffle=True)
 #Referring to https://towardsdatascience.com/build-a-fashion-mnist-cnn-pytorch-style-efb297e22582 for the neural network, usage of cross entropy and the accuracy function 
@@ -193,7 +193,7 @@ class Classifier(nn.Module):
 #         self.fc4 = nn.Linear(15, 10)
 
 #         self.dropout = nn.Dropout(p=0.2)
-        self.fc1 = nn.Linear(31, 87)
+        self.fc1 = nn.Linear(27, 87)
         self.fc3 = nn.Linear(87, 40)
         self.fc4 = nn.Linear(40, 4)
         
@@ -423,6 +423,18 @@ with open(name, "w") as f:
     f = tree.export_graphviz(auditor, out_file=f)
     i = i + 1
 
+del predict
+
+# Bias Ground Truth
+
+
+totalCorrect = 0
+for i in range(len(X_test_bias)):
+    predict = auditor.predict([X_test_bias.iloc[i]])
+    if predict[0][1] == y_test1.iloc[i]:
+        totalCorrect = totalCorrect + 1
+print("Acc of dec tree with bias feats on ground truth: ", totalCorrect/3880)
+
 del auditor
 del predict
 
@@ -443,6 +455,18 @@ name = "AuditorObscured.dot"
 with open(name, "w") as f:
     f = tree.export_graphviz(auditorObscured, out_file=f)
     i = i + 1
+
+del predict
+
+# Bias Ground Truth
+
+
+totalCorrect = 0
+for i in range(len(X_test)):
+    predict = auditorObscured.predict([X_test1.iloc[i]])
+    if predict[0][1] == y_test1.iloc[i]:
+        totalCorrect = totalCorrect + 1
+print("Acc of obscured dec tree learning ground truth: ", totalCorrect/3880)
 
 del auditorObscured
 del predict
